@@ -12,18 +12,25 @@ typedef struct virginia_cipher{
 
 int impl_encrypt(Virginia_Cipher *,const char *);
 int impl_decrypt(Virginia_Cipher *,const char *);
+char* impl_converter(char *);
 
 int New_Virginia_Cipher(Virginia_Cipher **self,char *key){
     if((*self = (Virginia_Cipher *)malloc(sizeof(Virginia_Cipher))) == NULL){
         fprintf(stderr,"Failed when creating object!...\n");
-        return -1;
+        system("pause");
+        exit(-1);
     }
     int i;
-    for(i=0;i<strlen(key);i++){
+    for(i=0;i<strlen(key) - 1;i++){
         if((key[i] <= 'z' && key[i] >= 'a') || (key[i] <= 'Z' && key[i] >= 'A')){
             continue;
+        }else if(((key[i] <= '9' && key[i] >= '0') || key[i] == ' ') && i == 0){
+            key = impl_converter(key);
+            break;
         }else{
-            fprintf(stderr,"Invalid key.");
+            fprintf(stderr,"Invalid key.\n");
+            system("pause");
+            exit(-1);
         }
     }
     (*self)->key = key;
@@ -66,6 +73,19 @@ int impl_decrypt(Virginia_Cipher *self, const char *ciphertext){
     printf("Plain text is : %s\n",plaintext);
     return 0;
 }
+char* impl_converter(char *key){
+    char *alphabet_key = (char *) malloc(sizeof(char) * 1024);
+    char *alphabet = NULL;
+    int key_num = 0;
+    int i;
+    alphabet = strtok(key," ");
+    for(i = 0;alphabet != NULL;alphabet = strtok(NULL," ") , i++){
+        sscanf(alphabet,"%d",&key_num);
+        alphabet_key[i] = (key_num % 26) + 'a';
+    }
+    alphabet_key[i] = '\0';
+    return alphabet_key;
+}
 int main(int argc, char *argv[]){
     Virginia_Cipher *vc;
 start:
@@ -73,12 +93,12 @@ start:
     char *text = (char *) malloc(sizeof(char) * 1024);
     fflush(stdin);
     fgets(text,1024, stdin);
-    printf("Input the key WITHOUT ANY PUNCTUATION...\n");
+    printf("Input the key WITHOUT ANY PUNCTUATION...Or input INTEGER KEY LIST with SPACE separated...\n");
     char *key = (char *) malloc(sizeof(char) * 1024);
     fgets(key,1024, stdin);
     New_Virginia_Cipher(&vc, key);
     int mode = 0;
-    printf("Type 0 to enter ENCRYPT MODE, 1 to enter DECRYPT MODE:");
+    printf("Type 0 to enter ENCRYPT MODE, 1 to enter DECRYPT MODE: ");
     scanf("%d",&mode);
     if(mode == 0){
         vc->encrypt(vc,text);
@@ -86,7 +106,7 @@ start:
     }else if(mode == 1){
         vc->decrypt(vc,text);
     }else{
-        printf("mode error");
+        printf("mode error\n");
         goto start;
     }
     system("pause");
